@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System - Local Server</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+        }
+        .instructions ol {
+            margin: 10px 0;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Login System - Backend Status</h1>
+        
+        <div id="status" class="status">
+            Checking backend status...
+        </div>
+        
+        <div class="instructions">
+            <h3>How to test the login system:</h3>
+            <ol>
+                <li><strong>Start the backend server:</strong> Run <code>npm start</code> in the terminal</li>
+                <li><strong>Open the frontend:</strong> Click the "Open Login Page" button below</li>
+                <li><strong>Register a new user:</strong> Fill out the registration form</li>
+                <li><strong>Login with the user:</strong> Switch to login form and enter credentials</li>
+                <li><strong>Test error handling:</strong> Try invalid credentials or duplicate registration</li>
+            </ol>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="index.html" class="btn" target="_blank">Open Login Page</a>
+            <button class="btn" onclick="checkBackendStatus()">Check Backend Status</button>
+            <button class="btn" onclick="testAPI()">Test API Endpoints</button>
+        </div>
+        
+        <div id="apiResults" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        // Check backend status on page load
+        window.addEventListener('load', checkBackendStatus);
+        
+        async function checkBackendStatus() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `
+                        <strong>✅ Backend is running!</strong><br>
+                        Server: http://localhost:3000<br>
+                        Status: ${data.status}<br>
+                        Message: ${data.message}
+                    `;
+                } else {
+                    throw new Error('Backend responded with error');
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    <strong>❌ Backend is not running</strong><br>
+                    Error: ${error.message}<br>
+                    Please start the server with: <code>npm start</code>
+                `;
+            }
+        }
+        
+        async function testAPI() {
+            const resultsDiv = document.getElementById('apiResults');
+            resultsDiv.innerHTML = '<h3>Testing API endpoints...</h3>';
+            
+            const tests = [
+                {
+                    name: 'Health Check',
+                    url: 'http://localhost:3000/api/health',
+                    method: 'GET'
+                },
+                {
+                    name: 'Register User',
+                    url: 'http://localhost:3000/api/register',
+                    method: 'POST',
+                    body: {
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        password: 'password123'
+                    }
+                },
+                {
+                    name: 'Login User',
+                    url: 'http://localhost:3000/api/login',
+                    method: 'POST',
+                    body: {
+                        email: 'test@example.com',
+                        password: 'password123'
+                    }
+                }
+            ];
+            
+            let results = '<h3>API Test Results:</h3>';
+            
+            for (const test of tests) {
+                try {
+                    const options = {
+                        method: test.method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    };
+                    
+                    if (test.body) {
+                        options.body = JSON.stringify(test.body);
+                    }
+                    
+                    const response = await fetch(test.url, options);
+                    const data = await response.json();
+                    
+                    results += `
+                        <div style="margin: 10px 0; padding: 10px; background: ${response.ok ? '#d4edda' : '#f8d7da'}; border-radius: 5px;">
+                            <strong>${test.name}:</strong> ${response.ok ? '✅ PASS' : '❌ FAIL'}<br>
+                            Status: ${response.status}<br>
+                            Response: ${JSON.stringify(data, null, 2)}
+                        </div>
+                    `;
+                } catch (error) {
+                    results += `
+                        <div style="margin: 10px 0; padding: 10px; background: #f8d7da; border-radius: 5px;">
+                            <strong>${test.name}:</strong> ❌ ERROR<br>
+                            Error: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            resultsDiv.innerHTML = results;
+        }
+    </script>
+</body>
+</html> 
